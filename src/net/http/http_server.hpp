@@ -8,6 +8,7 @@
 #include "net/http/http_common.hpp"
 #include "net/http/http_session.hpp"
 #include "utils/logger.hpp"
+#include <unordered_map>
 #include <memory>
 
 namespace cpp_streamer

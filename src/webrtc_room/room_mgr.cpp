@@ -152,11 +152,10 @@ void RoomMgr::OnAsyncRequestResponse(int id, const std::string& method, json& re
 void RoomMgr::OnAsyncNotification(const std::string& method, json& data_json) {
     LogInfof(logger_, "RoomMgr received async notification from PilotClient, method:%s, data:%s",
         method.c_str(), data_json.dump().c_str());
-    std::string room_id;
     std::shared_ptr<Room> room_ptr;
 
     try {
-        room_id = data_json["roomId"];
+        std::string room_id = data_json["roomId"];
         room_ptr = GetOrCreateRoom(room_id);
     } catch (const std::exception& e) {
         LogWarnf(logger_, "Invalid async notification data, missing roomId, exception:%s", e.what());
@@ -282,7 +281,8 @@ int RoomMgr::HandlePullRequest(int id, json& j, ProtooResponseI* resp_cb) {
 
         for (auto push_item : pushs) {
             PushInfo push_info;
-            push_info.pusher_id_ = push_item["pusher_id"];
+            std::string pid = push_item["pusher_id"];
+            push_info.pusher_id_ = pid;
             std::string media_type_str = push_item["type"];
             if (media_type_str == "audio") {
                 push_info.param_.av_type_ = MEDIA_AUDIO_TYPE;
