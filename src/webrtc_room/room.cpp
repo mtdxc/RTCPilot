@@ -2041,6 +2041,10 @@ RtpPacket* Room::GenRtpPacketFromOpusData(uint8_t* opus_data, size_t opus_data_l
 }
 
 void Room::OnSendVoiceAgentRtpPacket(int64_t now_ms) {
+    if (!Config::Instance().voice_agent_cfg_.enable_) {
+        return;
+    }
+
     try {
         VoiceAgentAiJoin();
     } catch (const std::exception& e) {
