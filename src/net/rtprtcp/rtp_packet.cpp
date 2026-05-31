@@ -380,10 +380,10 @@ bool RtpPacket::UpdateMid(uint8_t new_mid_extern_id, uint8_t mid) {
         OnebyteExtension* ext_data = iter->second;
         len = ext_data->len + 1;
         extern_value = ext_data->value;
-        ext_data->id = mid;
+        ext_data->id = new_mid_extern_id;
 
         onebyte_ext_map_.erase(mid_extension_id_);
-        mid_extension_id_ = mid;
+        mid_extension_id_ = new_mid_extern_id;
         onebyte_ext_map_[mid_extension_id_] = ext_data;
     } else if (HasTwobytesExt(this->ext)) {
         auto iter = twobytes_ext_map_.find(mid_extension_id_);
@@ -398,9 +398,9 @@ bool RtpPacket::UpdateMid(uint8_t new_mid_extern_id, uint8_t mid) {
             return false;
         }
         extern_value = ext_data->value;
-        ext_data->id = mid;
+        ext_data->id = new_mid_extern_id;
         twobytes_ext_map_.erase(mid_extension_id_);
-        mid_extension_id_ = mid;
+        mid_extension_id_ = new_mid_extern_id;
         twobytes_ext_map_[mid_extension_id_] = ext_data;
     } else {
         LogErrorf(logger_, "update mid, the extension bytes type is wrong, mid_extern_id:%d, mid:%d", mid_extension_id_, mid);

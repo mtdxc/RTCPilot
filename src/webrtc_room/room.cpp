@@ -1144,7 +1144,12 @@ int Room::UpdateRtcSdpByPullers(std::vector<std::shared_ptr<MediaPuller>>& media
                 bool found_main_codec = false;
                 for (auto media_codec_it = it->second->media_codecs_.begin();
                     media_codec_it != it->second->media_codecs_.end(); media_codec_it++) {
-                    bool contain = FmtpParamContain(media_codec_it->second->fmtp_param_, param.fmtp_param_);
+                    // For audio codecs (e.g. opus), fmtp params are informational and vary
+                    // between browsers. Match by codec name only to ensure payload_type
+                    // is correctly updated to the puller's PT.
+                    bool contain = (media_type == MEDIA_AUDIO_TYPE)
+                        ? (media_codec_it->second->codec_name_ == param.codec_name_)
+                        : FmtpParamContain(media_codec_it->second->fmtp_param_, param.fmtp_param_);
                     if (media_codec_it->second->codec_name_ == param.codec_name_ && contain) {
                         param.payload_type_ = media_codec_it->second->payload_type_;
                         param.rtx_payload_type_ = media_codec_it->second->rtx_payload_type_;
@@ -1155,7 +1160,7 @@ int Room::UpdateRtcSdpByPullers(std::vector<std::shared_ptr<MediaPuller>>& media
                         break;
                     }
                 }
-                if (!found_main_codec && media_type != MEDIA_AUDIO_TYPE) {
+                if (!found_main_codec) {
                     auto main_codec_ptr = std::make_shared<RtcSdpMediaCodec>();
                     
                     main_codec_ptr->codec_name_ = param.codec_name_;
@@ -1181,18 +1186,21 @@ int Room::UpdateRtcSdpByPullers(std::vector<std::shared_ptr<MediaPuller>>& media
                             ext_it = it->second->extensions_.erase(ext_it);
                             continue;
                         }
+                        param.abs_send_time_ext_id_ = ext_it->first;
                     }
                     if (ext_it->second->uri_ == trans_wide_ext_str) {
                         if (param.tcc_ext_id_ < 0) {
                             ext_it = it->second->extensions_.erase(ext_it);
                             continue;
                         }
+                        param.tcc_ext_id_ = ext_it->first;
                     }
                     if (ext_it->second->uri_ == mid_ext_str) {
                         if (param.mid_ext_id_ < 0) {
                             ext_it = it->second->extensions_.erase(ext_it);
                             continue;
                         }
+                        param.mid_ext_id_ = ext_it->first;
                     }
                     /*
                     if (ext_it->second->uri_ == audio_level_ext_str) {
