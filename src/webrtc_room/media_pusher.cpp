@@ -65,14 +65,20 @@ int MediaPusher::HandleRtpPacket(RtpPacket* rtp_pkt) {
     if (param_.abs_send_time_ext_id_ > 0) {
         rtp_pkt->SetAbsTimeExtensionId(param_.abs_send_time_ext_id_);
     }
-    
     uint32_t ssrc = rtp_pkt->GetSsrc();
-    auto it = ssrc2sessions_.find(ssrc);
-    if (it != ssrc2sessions_.end()) {
-        bool result = it->second->ReceiveRtpPacket(rtp_pkt);
+    bool is_rtx = false;
+    auto session = GetRtpRecvSession(rtp_pkt, is_rtx);
+    if (!session) {
+        LogErrorf(logger_, "MediaPusher HandleRtpPacket, no session for ssrc:%u, room_id:%s, user_id:%s",
+            rtp_pkt->GetSsrc(), room_id_.c_str(), user_id_.c_str());
+        return -1;
+    }
+
+    if (!is_rtx) {
+        bool result = session->ReceiveRtpPacket(rtp_pkt);
         if (!result) {
             LogErrorf(logger_, "MediaPusher Handle RtpPacket failed for ssrc:%u, room_id:%s, user_id:%s",
-                ssrc, room_id_.c_str(), user_id_.c_str());
+                rtp_pkt->GetSsrc(), room_id_.c_str(), user_id_.c_str());
             return -1;
         }
         if (Config::Instance().voice_agent_cfg_.enable_ && param_.av_type_ == MEDIA_AUDIO_TYPE) {
@@ -91,30 +97,75 @@ room_id:%s, user_id:%s", e.what(), room_id_.c_str(), user_id_.c_str());
         packet2room_cb_->OnRtpPacketFromRtcPusher(user_id_, session_id_, pusher_id_, rtp_pkt);
         return 0;
     }
-    auto rtx_it = rtxssrc2sessions_.find(ssrc);
-    if (rtx_it != rtxssrc2sessions_.end()) {
-        bool repeat = false;
-        bool result = rtx_it->second->ReceiveRtxPacket(rtp_pkt, repeat);
-        if (!result) {
-            LogErrorf(logger_, "MediaPusher Handle RtpPacket failed for rtx ssrc:%u, room_id:%s, user_id:%s",
-                ssrc, room_id_.c_str(), user_id_.c_str());
-            return -1;
-        }
-        if (repeat) {
-            return 0;
-        }
-        if (rtp_pkt->GetSsrc() == ssrc) {
-            return 0;
-        }
-        if (rtp_pkt->GetPayloadLength() == 0) {
-            return 0;
-        }
-        packet2room_cb_->OnRtpPacketFromRtcPusher(user_id_,session_id_, pusher_id_, rtp_pkt);
+    
+
+    bool repeat = false;
+    bool result = session->ReceiveRtxPacket(rtp_pkt, repeat);
+    if (!result) {
+        LogErrorf(logger_, "MediaPusher Handle RtpPacket failed for rtx ssrc:%u, room_id:%s, user_id:%s",
+            rtp_pkt->GetSsrc(), room_id_.c_str(), user_id_.c_str());
+        return -1;
+    }
+    if (repeat) {
         return 0;
     }
-    LogErrorf(logger_, "MediaPusher Handle RtpPacket, unknown ssrc:%u, room_id:%s, user_id:%s",
-        ssrc, room_id_.c_str(), user_id_.c_str());
-    return -1;
+    if (rtp_pkt->GetSsrc() == ssrc) {
+        return 0;
+    }
+    if (rtp_pkt->GetPayloadLength() == 0) {
+        return 0;
+    }
+    packet2room_cb_->OnRtpPacketFromRtcPusher(user_id_,session_id_, pusher_id_, rtp_pkt);
+    return 0;
+}
+
+std::shared_ptr<RtpRecvSession> MediaPusher::GetRtpRecvSession(RtpPacket* rtp_pkt, bool& is_rtx) {
+    uint32_t ssrc = rtp_pkt->GetSsrc();
+    int payload_type = rtp_pkt->GetPayloadType();
+    is_rtx = false;
+    
+    auto it = ssrc2sessions_.find(ssrc);
+    if (it != ssrc2sessions_.end()) {
+        is_rtx = false;
+        return it->second;
+
+    }
+    auto rtx_it = rtxssrc2sessions_.find(ssrc);
+    if (rtx_it != rtxssrc2sessions_.end()) {
+        is_rtx = true;
+        return rtx_it->second;
+    }
+    
+    std::shared_ptr<RtpRecvSession> session = nullptr;
+    for (auto& item : ssrc2sessions_) {
+        if (item.second->GetRtpSessionParam().payload_type_ == payload_type) {
+            session = item.second;
+            is_rtx = false;
+            break;
+        }
+    }
+    if (session) {
+        session->UpdateSSRC(ssrc);
+        ssrc2sessions_[ssrc] = session;
+        is_rtx = false;
+        return session;
+    }
+
+    std::shared_ptr<RtpRecvSession> rtx_session = nullptr;
+    for (auto& item : rtxssrc2sessions_) {
+        if (item.second->GetRtpSessionParam().payload_type_ == payload_type) {
+            rtx_session = item.second;
+            is_rtx = true;
+            break;
+        }
+    }
+    if (rtx_session) {
+        rtx_session->UpdateSSRC(ssrc);
+        rtxssrc2sessions_[ssrc] = rtx_session;
+        is_rtx = true;
+        return rtx_session;
+    }
+    return nullptr;
 }
 
 int MediaPusher::HandleRtcpSrPacket(RtcpSrPacket* sr_pkt) {
@@ -203,6 +254,10 @@ void MediaPusher::RequestKeyFrame(uint32_t ssrc) {
     LogInfof(logger_, "MediaPusher RequestKeyFrame, room_id:%s, user_id:%s, session_id:%s, pusher_id:%s, ssrc:%u",
         room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), pusher_id_.c_str(), ssrc);
     cb_->OnTransportSendRtcp(pspli_pkt->GetData(), pspli_pkt->GetDataLen());
+}
+
+void MediaPusher::UpdateSSRC(uint32_t new_ssrc) {
+    param_.ssrc_ = new_ssrc;
 }
 
 } // namespace cpp_streamer

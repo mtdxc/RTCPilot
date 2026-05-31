@@ -606,7 +606,7 @@ int Room::HandlePushSdp(const std::string& user_id,
     last_alive_ms_ = now_millisec();
     auto sdp_ptr = RtcSdp::ParseSdp(sdp_type, sdp_str);
     
-    LogDebugf(logger_, "HandlePushSdp, user_id:%s, room_id:%s, sdp dump:\r\n%s",
+    LogInfof(logger_, "HandlePushSdp, user_id:%s, room_id:%s, sdp dump:\r\n%s",
         user_id.c_str(), room_id_.c_str(), sdp_ptr->DumpSdp().c_str());
     if (g_rtc_event_log) {
         json evt_data;
@@ -926,6 +926,8 @@ int Room::HandlePullSdp(const PullRequestInfo& pull_info,
                 pull_info.src_user_id_.c_str(), room_id_.c_str(), e.what());
             return -1;
         }
+        LogInfof(logger_, "pull sdp origin dump:\r\n%s", pull_sdp_ptr->DumpSdp().c_str());
+
         for (const auto& push_info : pull_info.pushers_) {
             std::string id = push_info.pusher_id_;
             auto it = pusherId2pusher_.find(id);
@@ -1153,7 +1155,7 @@ int Room::UpdateRtcSdpByPullers(std::vector<std::shared_ptr<MediaPuller>>& media
                         break;
                     }
                 }
-                if (!found_main_codec) {
+                if (!found_main_codec && media_type != MEDIA_AUDIO_TYPE) {
                     auto main_codec_ptr = std::make_shared<RtcSdpMediaCodec>();
                     
                     main_codec_ptr->codec_name_ = param.codec_name_;

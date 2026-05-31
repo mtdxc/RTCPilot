@@ -60,6 +60,7 @@ void MediaPuller::OnTransportSendRtp(RtpPacket* in_pkt) {
         if (!r1) {
             LogDebugf(logger_, "puller update mid error, new extern_id:%d, old extern_id:%d mid:%d", 
                 param_.mid_ext_id_, old_extern_id, param_.mid_);
+            LogInfof(logger_, "rtp packet dump:%s", rtp_pkt->Dump().c_str());
         }
     }
     if (param_.tcc_ext_id_ > 0) {
