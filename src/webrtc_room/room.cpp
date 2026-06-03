@@ -1058,7 +1058,19 @@ void Room::OnRtpPacketFromRtcPusher(const std::string& user_id, const std::strin
     if (pullers_it != pusher2pullers_.end()) {
         for (const auto& puller_pair : pullers_it->second) {
             auto media_puller = puller_pair.second;
-            media_puller->OnTransportSendRtp(rtp_packet);
+            RtpPacket* cpy_pkt = rtp_packet->Clone();
+            try {
+                media_puller->OnTransportSendRtp(cpy_pkt);
+                delete cpy_pkt;
+                cpy_pkt = nullptr;
+            } catch (const std::exception& e) {
+                LogErrorf(logger_, "OnRtpPacketFromRtcPusher exception, puller userId:%s room_id:%s, error:%s",
+                    media_puller->GetPulllerUserId().c_str(), room_id_.c_str(), e.what());
+                if (cpy_pkt) {
+                    delete cpy_pkt;
+                    cpy_pkt = nullptr;
+                }
+            }
 
             std::string puller_user_id = media_puller->GetPulllerUserId();
             auto user_it = users_.find(puller_user_id);
@@ -1070,7 +1082,19 @@ void Room::OnRtpPacketFromRtcPusher(const std::string& user_id, const std::strin
 
     auto relay_it = pusher_user_id2sendRelay_.find(user_id);
     if (relay_it != pusher_user_id2sendRelay_.end()) {
-        relay_it->second->SendRtpPacket(rtp_packet);
+        RtpPacket* cpy_pkt = rtp_packet->Clone();
+        try {
+            relay_it->second->SendRtpPacket(cpy_pkt);
+            delete cpy_pkt;
+            cpy_pkt = nullptr;
+        } catch (const std::exception& e) {
+            LogErrorf(logger_, "OnRtpPacketFromRtcPusher exception, relay pusher userId:%s room_id:%s, error:%s",
+                relay_it->second->GetPusherId().c_str(), room_id_.c_str(), e.what());
+            if (cpy_pkt) {
+                delete cpy_pkt;
+                cpy_pkt = nullptr;
+            }
+        }
     }
 }
 
@@ -1088,7 +1112,20 @@ void Room::OnRtpPacketFromRemoteRtcPusher(const std::string& pusher_user_id,
     if (pullers_it != pusher2pullers_.end()) {
         for (const auto& puller_pair : pullers_it->second) {
             auto media_puller = puller_pair.second;
-            media_puller->OnTransportSendRtp(rtp_packet);
+            
+            RtpPacket* cpy_pkt = rtp_packet->Clone();
+            try {
+                media_puller->OnTransportSendRtp(cpy_pkt);
+                delete cpy_pkt;
+                cpy_pkt = nullptr;
+            } catch (const std::exception& e) {
+                LogErrorf(logger_, "OnRtpPacketFromRemoteRtcPusher exception, puller userId:%s room_id:%s, error:%s",
+                    media_puller->GetPulllerUserId().c_str(), room_id_.c_str(), e.what());
+                if (cpy_pkt) {
+                    delete cpy_pkt;
+                    cpy_pkt = nullptr;
+                }
+            }
 
             std::string puller_user_id = media_puller->GetPulllerUserId();
             auto user_it = users_.find(puller_user_id);

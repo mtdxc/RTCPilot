@@ -55,9 +55,9 @@ void MediaPusher::CreateRtpRecvSession() {
 int MediaPusher::HandleRtpPacket(RtpPacket* rtp_pkt) {
     rtp_pkt->SetLogger(logger_);
 
-    //set mid extension id
+    //clear mid extension in packet (zero out ext id, making it padding)
     if (param_.mid_ext_id_ > 0) {
-        rtp_pkt->SetMidExtensionId((uint8_t)param_.mid_ext_id_);
+        rtp_pkt->SetMidExtensionId(static_cast<uint8_t>(param_.mid_ext_id_));
     }
     if (param_.tcc_ext_id_ > 0) {
         rtp_pkt->SetTccExtensionId(param_.tcc_ext_id_);
@@ -94,6 +94,12 @@ int MediaPusher::HandleRtpPacket(RtpPacket* rtp_pkt) {
 room_id:%s, user_id:%s", e.what(), room_id_.c_str(), user_id_.c_str());
             }
         }
+        
+        uint8_t old_ext_id = 0;
+        rtp_pkt->ClearMidExtension((uint8_t)param_.mid_, old_ext_id);
+        LogDebugf(logger_, "MediaPusher clear mid extension, old_ext_id:%d, mid:%d",
+            old_ext_id, param_.mid_);
+        
         packet2room_cb_->OnRtpPacketFromRtcPusher(user_id_, session_id_, pusher_id_, rtp_pkt);
         return 0;
     }
@@ -115,6 +121,12 @@ room_id:%s, user_id:%s", e.what(), room_id_.c_str(), user_id_.c_str());
     if (rtp_pkt->GetPayloadLength() == 0) {
         return 0;
     }
+    
+    uint8_t old_ext_id = 0;
+    rtp_pkt->ClearMidExtension((uint8_t)param_.mid_, old_ext_id);
+    LogDebugf(logger_, "MediaPusher clear mid extension, old_ext_id:%d, mid:%d",
+        old_ext_id, param_.mid_);
+    
     packet2room_cb_->OnRtpPacketFromRtcPusher(user_id_,session_id_, pusher_id_, rtp_pkt);
     return 0;
 }
@@ -243,7 +255,11 @@ session_id:%s, pusher_id:%s, ssrc:%u, media_type:%s, recv_kbits:%zu, recv_pkt_co
 
 
 void MediaPusher::RequestKeyFrame(uint32_t ssrc) {
-    assert(ssrc == param_.ssrc_);
+    if(ssrc != param_.ssrc_) {
+        LogErrorf(logger_, "MediaPusher RequestKeyFrame ssrc mismatch, request ssrc:%u, session ssrc:%u, room_id:%s, user_id:%s",
+            ssrc, param_.ssrc_, room_id_.c_str(), user_id_.c_str());
+        ssrc = param_.ssrc_;
+    }
 
     std::unique_ptr<RtcpPsPli> pspli_pkt = std::make_unique<RtcpPsPli>();
 

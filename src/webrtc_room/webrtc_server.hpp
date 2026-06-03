@@ -7,6 +7,7 @@
 #include "udp_transport.hpp"
 
 #include <map>
+#include <vector>
 
 namespace cpp_streamer {
 

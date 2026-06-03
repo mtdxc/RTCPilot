@@ -390,8 +390,7 @@ void WebRtcSession::OnTransportSendRtp(uint8_t* data, size_t sent_size) {
     if (!dtls_connected_) {
         return;
     }
-    LogDebugf(logger_, "OnTransportSendRtp, room_id:%s, user_id:%s, session_id:%s, len:%zu",
-        room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), sent_size);
+
     if (!srtp_send_session_) {
         LogErrorf(logger_, "SRTP not established (RTP send), room_id:%s, user_id:%s, session_id:%s",
             room_id_.c_str(), user_id_.c_str(), session_id_.c_str());
