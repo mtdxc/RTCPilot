@@ -448,7 +448,6 @@ int WebRtcSession::AddPusherRtpSession(const RtpSessionParam& param, std::string
         if (param.rtx_ssrc_ != 0) {
             ssrc2media_pusher_[param.rtx_ssrc_] = media_pusher;
         }
-        mid2media_pusher_[param.mid_ext_id_] = media_pusher;
     } catch(const std::exception& e) {
         LogErrorf(logger_, "AddPusherRtpSession exception:%s, room_id:%s, user_id:%s",
             e.what(), room_id_.c_str(), user_id_.c_str());

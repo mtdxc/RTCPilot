@@ -129,8 +129,6 @@ void RtpSendSession::RetransmitRtxPackets(RtpPacket* rtp_pkt) {
         // replace ssrc and payload with rtx ssrc and rtx payload
         rtp_pkt->RtxMux(param_.rtx_payload_type_, param_.rtx_ssrc_, rtx_seq_);
 
-        LogInfof(logger_, "++++RtpSendSession Retransmit rtp packet, room_id:%s, puller_user_id:%s, pusher_user_id:%s, ssrc:%u, seq:%u",
-            room_id_.c_str(), puller_user_id_.c_str(), pusher_user_id_.c_str(), param_.ssrc_, rtx_seq_);
         send_cb_->OnTransportSendRtp(rtp_pkt->GetData(), rtp_pkt->GetDataLength());
         
         // restore origin ssrc and payload
