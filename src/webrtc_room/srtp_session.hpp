@@ -1,7 +1,11 @@
 ﻿#ifndef SRTP_SESSION_HPP
 #define SRTP_SESSION_HPP
 #include "utils/logger.hpp"
+#ifdef _WIN32
+#include "srtp.h"
+#else
 #include <srtp2/srtp.h>
+#endif
 #include <cstdint>
 #include <cstddef>
 

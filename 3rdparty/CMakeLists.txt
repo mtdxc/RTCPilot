@@ -4,10 +4,9 @@ set(EXTRA_CFLAGS -I${PREFIX_DIR}/include)
 set(EXTRA_LDFLAGS -L${PREFIX_DIR}/lib)
 set(EXTRA_LIBS "-lm -pthread -ldl")
 
-add_subdirectory(libuv)
-add_subdirectory(yaml-cpp)
+if (WIN32)
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
 if (CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
 ExternalProject_Add(openssl
@@ -50,27 +49,11 @@ ExternalProject_Add(openssl
     )
 endif()
 
-# Build libsrtp from bundled tarball (if present)
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libsrtp.tar.gz)
-    ExternalProject_Add(srtp2-ext
-        URL ${CMAKE_CURRENT_SOURCE_DIR}/libsrtp.tar.gz
-        SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/libsrtp
-        BUILD_IN_SOURCE 1
-        # Ensure libsrtp is configured and built only after OpenSSL is installed
-        DEPENDS openssl
-    # Use cmake -E env to set environment variables so arguments are not injected with extra quotes
-    # Run './configure' from the extracted SOURCE_DIR (ExternalProject will run this command in SOURCE_DIR)
-    # Enable OpenSSL support and AES-GCM (AEAD) support for WebRTC
-    # Supply PKG_CONFIG_PATH so libsrtp's configure can locate OpenSSL installed into PREFIX_DIR
-    # Also pass CPPFLAGS/LIBS for a robust fallback on platforms without pkg-config
-    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env
-        PKG_CONFIG_PATH=${PREFIX_DIR}/lib/pkgconfig
-        CPPFLAGS=-I${PREFIX_DIR}/include
-        LDFLAGS=-L${PREFIX_DIR}/lib
-        CFLAGS=${EXTRA_CFLAGS}
-        ./configure --prefix=${PREFIX_DIR} --libdir=${PREFIX_DIR}/lib --enable-openssl
-        BUILD_COMMAND make -j 4
-        INSTALL_COMMAND make install
-        )
-endif()
+add_subdirectory(libuv)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
+add_subdirectory(yaml-cpp)
+set(ENABLE_OPENSSL ON CACHE BOOL "Enable OpenSSL for libsrtp" FORCE)
+# Disable libsrtp test/example binaries in this project build.
+set(TEST_APPS OFF CACHE BOOL "Build test applications" FORCE)
+add_subdirectory(libsrtp)
 

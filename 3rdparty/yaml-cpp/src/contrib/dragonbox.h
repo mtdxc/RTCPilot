@@ -938,8 +938,13 @@ namespace jkj {
                 }
 
                 template <template <stdr::size_t> class Info, stdr::int_least32_t min_exponent,
+                          stdr::int_least32_t max_exponent, stdr::size_t current_tier>
+                JKJ_INLINE_VARIABLE bool is_in_range_v =
+                    is_in_range<Info, min_exponent, max_exponent, current_tier>(0);
+
+                template <template <stdr::size_t> class Info, stdr::int_least32_t min_exponent,
                           stdr::int_least32_t max_exponent, stdr::size_t current_tier = 0,
-                          bool = is_in_range<Info, min_exponent, max_exponent, current_tier>(0)>
+                          bool = is_in_range_v<Info, min_exponent, max_exponent, current_tier>>
                 struct compute_impl;
 
                 template <template <stdr::size_t> class Info, stdr::int_least32_t min_exponent,

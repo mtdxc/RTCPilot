@@ -2,7 +2,11 @@ cmake_minimum_required(VERSION 3.7.1)
 project(cpp_streamer)
 
 #set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++11 -g -Wno-deprecated -Wno-deprecated-declarations -Wno-reorder -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC")
+if(MSVC)
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /std:c++14 /EHsc /D__STDC_FORMAT_MACROS")
+else()
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++14 -g -Wno-deprecated -Wno-deprecated-declarations -Wall -fexceptions -frtti -D__STDC_FORMAT_MACROS -fPIC")
+endif()
 
 
 set(CMAKE_OUTPUT_BASE ${CMAKE_BINARY_DIR}/output)
@@ -42,9 +46,23 @@ foreach(_hdr ${PROJECT_HEADER_FILES})
 endforeach()
 list(REMOVE_DUPLICATES SRC_INCLUDE_DIRS)
 
+if (WIN32)
+    set(OPENSSL_ROOT_DIR "${PROJECT_SOURCE_DIR}/win_3rdparty/openssl")
+    set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
+    set(OPENSSL_USE_STATIC_LIBS TRUE)
+    find_package(OpenSSL REQUIRED)
+    list(APPEND SRC_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIR})
+    link_directories(${OPENSSL_ROOT_DIR}/lib)
+    # Keep a stable dependency target name for upper CMakeLists.
+    if(NOT TARGET openssl)
+        add_custom_target(openssl)
+    endif()
+endif()
+
 include_directories(${CMAKE_BINARY_DIR}/output/include
                     ${CMAKE_BINARY_DIR}/output/include/openssl
                     ${PROJECT_SOURCE_DIR}/src
+                    ${PROJECT_SOURCE_DIR}/3rdparty/libuv/include
                     ${PROJECT_SOURCE_DIR}/3rdparty/sherpa-onnx
                     ${SRC_INCLUDE_DIRS}
                     /usr/local/include)
@@ -238,9 +256,13 @@ add_executable(RTCPilot
             ${PROJECT_SOURCE_DIR}/src/config/config.cpp
             ${PROJECT_SOURCE_DIR}/src/cpp_streamer_interface.hpp
             ${PROJECT_SOURCE_DIR}/src/RTCPilot.cpp
-
             )
-add_dependencies(RTCPilot openssl uv srtp2-ext yaml-cpp)
+target_include_directories(RTCPilot PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/3rdparty/libsrtp/include
+    ${PROJECT_SOURCE_DIR}/3rdparty/yaml-cpp/include
+)
+add_dependencies(RTCPilot openssl uv srtp2 yaml-cpp)
 IF (APPLE)
 target_link_libraries(RTCPilot dl z bz2 iconv 
                     ssl crypto srtp2 uv yaml-cpp 
@@ -249,6 +271,8 @@ ELSEIF (UNIX)
 target_link_libraries(RTCPilot rt dl z m bz2 iconv 
                     pthread ssl crypto srtp2 uv yaml-cpp 
                     )
+ELSEIF (WIN32)
+target_link_libraries(RTCPilot ws2_32 libssl.lib libcrypto.lib srtp2 uv yaml-cpp)
 ENDIF ()
 
 # On macOS, set RPATH so the built executable can find dylibs in build/output/lib at runtime.
@@ -270,16 +294,21 @@ endif()
 add_executable(rtcp_tcc_fb_test
     ${PROJECT_SOURCE_DIR}/tests/rtcp_tcc_fb_test.cpp
 )
+if(WIN32)
+target_link_libraries(rtcp_tcc_fb_test ws2_32)
+endif()
 add_executable(timer_test
     ${PROJECT_SOURCE_DIR}/tests/timer_test.cpp
     ${PROJECT_SOURCE_DIR}/src/utils/timer.cpp
     ${PROJECT_SOURCE_DIR}/src/utils/timeex.cpp
 )
-add_dependencies(timer_test srtp2-ext uv)
+add_dependencies(timer_test uv)
 IF (APPLE)
-target_link_libraries(timer_test dl z ssl crypto srtp2 uv yaml-cpp)
+target_link_libraries(timer_test dl z ssl crypto uv)
 ELSEIF (UNIX)
-target_link_libraries(timer_test rt dl z m pthread ssl crypto srtp2 uv yaml-cpp)
+target_link_libraries(timer_test rt dl z m pthread ssl crypto uv)
+ELSEIF (WIN32)
+target_link_libraries(timer_test ws2_32 uv)
 ENDIF ()
 
 # Ensure tests inherit include directories
@@ -326,10 +355,10 @@ target_include_directories(ws_protoo_client_test PRIVATE
 
 # Link against system libs used by websocket/timer pieces
 IF (APPLE)
-    target_link_libraries(ws_protoo_client_test dl z ssl crypto uv yaml-cpp)
+    target_link_libraries(ws_protoo_client_test dl z ssl crypto uv)
 ELSEIF (UNIX)
-    target_link_libraries(ws_protoo_client_test rt dl z m pthread ssl crypto uv yaml-cpp)
-ELSE()
-    # On Windows, expect the environment/project to provide appropriate libs
+    target_link_libraries(ws_protoo_client_test rt dl z m pthread ssl crypto uv)
+ELSEIF (WIN32)
+    target_link_libraries(ws_protoo_client_test ws2_32 uv libssl.lib libcrypto.lib)
 ENDIF()
 
