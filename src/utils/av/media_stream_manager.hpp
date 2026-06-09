@@ -27,7 +27,7 @@ namespace cpp_streamer
         ~MediaStream();
 
     public:
-		Logger* logger_ = nullptr;
+        Logger* logger_ = nullptr;
         std::string stream_key_;//app/streamname
         bool publisher_exist_ = false;
         GopCache cache_;

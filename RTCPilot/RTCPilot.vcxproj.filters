@@ -267,6 +267,15 @@
     <ClCompile Include="..\src\webrtc_room\whip.cpp">
       <Filter>源文件\webrtc_room</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\webrtc_room\voice_agent\va_fake_session.cpp">
+      <Filter>源文件\webrtc_room</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\webrtc_room\voice_agent\voice_agent.cpp">
+      <Filter>源文件\webrtc_room</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\webrtc_room\fast_jitterbuffer.cpp">
+      <Filter>源文件\webrtc_room</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\utils\base64.hpp">
@@ -585,6 +594,18 @@
       <Filter>源文件\utils</Filter>
     </ClInclude>
     <ClInclude Include="..\src\webrtc_room\whip.hpp">
+      <Filter>源文件\webrtc_room</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\webrtc_room\voice_agent\va_fake_session.hpp">
+      <Filter>源文件\webrtc_room</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\webrtc_room\voice_agent\voice_agent.hpp">
+      <Filter>源文件\webrtc_room</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\webrtc_room\voice_agent\voice_agent_pub.hpp">
+      <Filter>源文件\webrtc_room</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\webrtc_room\fast_jitterbuffer.hpp">
       <Filter>源文件\webrtc_room</Filter>
     </ClInclude>
   </ItemGroup>

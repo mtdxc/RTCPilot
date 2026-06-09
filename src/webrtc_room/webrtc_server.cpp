@@ -2,7 +2,10 @@
 #include "webrtc_session.hpp"
 #include "net/stun/stun.hpp"
 #include <vector>
+#ifdef _WIN32
+#else
 #include <arpa/inet.h>
+#endif
 
 namespace cpp_streamer {
 

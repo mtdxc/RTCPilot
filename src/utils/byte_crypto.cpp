@@ -83,7 +83,6 @@ void ByteCrypto::DeInit() {
 
 uint32_t ByteCrypto::GetRandomUint(uint32_t min, uint32_t max) {
     std::uniform_int_distribution<uint32_t> dest(min, max);
-
     return dest(random);
 }
 

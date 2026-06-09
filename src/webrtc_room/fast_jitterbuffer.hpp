@@ -39,8 +39,8 @@ private:
     int clock_rate_ = 90000;
 
     // Jitter buffer state
-    uint16_t next_expected_seq_ = 0;  // 下一个期望的序列号
-    bool has_received_first_packet_ = false;  // 是否收到第一个包
+    uint16_t next_expected_seq_ = 0;
+    bool has_received_first_packet_ = false;
     std::map<uint16_t, RtpPacket*> packet_buffer_;
     bool closed_ = false;
 };

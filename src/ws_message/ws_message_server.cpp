@@ -10,7 +10,7 @@ namespace cpp_streamer {
 std::map<std::string, std::shared_ptr<WsMessageSession>> WsMessageServer::ws_message_sessions;
 
 void OnWSMessageSessionHandle(const std::string& uri, WebSocketSession* session) {
-    std::shared_ptr<WsMessageSession> session_ptr = std::make_shared<WsMessageSession>(session,
+    auto session_ptr = std::make_shared<WsMessageSession>(session,
         &RoomMgr::Instance(session->UvLoop(), session->GetLogger()),
         session->GetLogger());
 

@@ -19,37 +19,37 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>17.0</VCProjectVersion>
+    <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{729dded5-1c9c-4810-af5b-3bbf1f21e3c4}</ProjectGuid>
     <RootNamespace>RTCPilot</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>RTCPilot</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -74,6 +74,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(SolutionDir)src;$(SolutionDir)src\format;$(SolutionDir)src\format\flv;$(SolutionDir)src\format\amf;$(SolutionDir)src\utils;$(SolutionDir)src\utils\av;$(SolutionDir)src\ws_stream;$(SolutionDir)src\net;$(SolutionDir)src\net\tcp;$(SolutionDir)src\net\tcp\co_tcp;$(SolutionDir)src\net\http;$(SolutionDir)src\net\httpflv;$(SolutionDir)src\net\http\co_http;$(SolutionDir)src\net\rtprtcp;$(SolutionDir)src\net\rtmp\co_rtmp;$(SolutionDir)win_3rdparty\libuv\include;$(SolutionDir)win_3rdparty\openssl\include;$(SolutionDir)win_3rdparty\yaml-cpp\include;$(SolutionDir)win_3rdparty\libsrtp\include</IncludePath>
     <LibraryPath>$(SolutionDir)win_3rdparty\openssl\lib;$(SolutionDir)win_3rdparty\libuv\lib;$(SolutionDir)win_3rdparty\yaml-cpp\lib;$(SolutionDir)win_3rdparty\libsrtp\lib;$(LibraryPath)</LibraryPath>
+    <OutDir>$(ProjectDir)</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -109,7 +110,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;YAML_CPP_STATIC_DEFINE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>Default</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -173,6 +174,7 @@
     <ClCompile Include="..\src\utils\timeex.cpp" />
     <ClCompile Include="..\src\utils\timer.cpp" />
     <ClCompile Include="..\src\webrtc_room\dtls_session.cpp" />
+    <ClCompile Include="..\src\webrtc_room\fast_jitterbuffer.cpp" />
     <ClCompile Include="..\src\webrtc_room\ice_server.cpp" />
     <ClCompile Include="..\src\webrtc_room\media_puller.cpp" />
     <ClCompile Include="..\src\webrtc_room\media_pusher.cpp" />
@@ -189,6 +191,8 @@
     <ClCompile Include="..\src\webrtc_room\rtp_session.cpp" />
     <ClCompile Include="..\src\webrtc_room\srtp_session.cpp" />
     <ClCompile Include="..\src\webrtc_room\tcc_server.cpp" />
+    <ClCompile Include="..\src\webrtc_room\voice_agent\va_fake_session.cpp" />
+    <ClCompile Include="..\src\webrtc_room\voice_agent\voice_agent.cpp" />
     <ClCompile Include="..\src\webrtc_room\webrtc_server.cpp" />
     <ClCompile Include="..\src\webrtc_room\webrtc_session.cpp" />
     <ClCompile Include="..\src\webrtc_room\whip.cpp" />
@@ -279,6 +283,7 @@
     <ClInclude Include="..\src\utils\timer.hpp" />
     <ClInclude Include="..\src\utils\uuid.hpp" />
     <ClInclude Include="..\src\webrtc_room\dtls_session.hpp" />
+    <ClInclude Include="..\src\webrtc_room\fast_jitterbuffer.hpp" />
     <ClInclude Include="..\src\webrtc_room\ice_server.hpp" />
     <ClInclude Include="..\src\webrtc_room\media_puller.hpp" />
     <ClInclude Include="..\src\webrtc_room\media_pusher.hpp" />
@@ -296,6 +301,9 @@
     <ClInclude Include="..\src\webrtc_room\rtp_session.hpp" />
     <ClInclude Include="..\src\webrtc_room\srtp_session.hpp" />
     <ClInclude Include="..\src\webrtc_room\tcc_server.hpp" />
+    <ClInclude Include="..\src\webrtc_room\voice_agent\va_fake_session.hpp" />
+    <ClInclude Include="..\src\webrtc_room\voice_agent\voice_agent.hpp" />
+    <ClInclude Include="..\src\webrtc_room\voice_agent\voice_agent_pub.hpp" />
     <ClInclude Include="..\src\webrtc_room\webrtc_server.hpp" />
     <ClInclude Include="..\src\webrtc_room\webrtc_session.hpp" />
     <ClInclude Include="..\src\webrtc_room\whip.hpp" />
