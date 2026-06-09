@@ -37,16 +37,14 @@ WebRtcSession::WebRtcSession(SRtpType type, const std::string& room_id, const st
     tcc_server_.reset(new TccServer(this, logger_));
 
     LogInfof(logger_, "WebRtcSession construct, room_id:%s, user_id:%s, session_id:%s, direction:%s",
-        room_id_.c_str(), user_id_.c_str(), session_id_.c_str(),
-        (direction_type_ == SRtpType::SRTP_SESSION_TYPE_SEND) ? "SEND" : "RECV");
+        room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), SRtpTypeStr(direction_type_));
 }
 
 WebRtcSession::~WebRtcSession() {
     StopTimer();
     Close();
     LogInfof(logger_, "WebRtcSession destruct, room_id:%s, user_id:%s, session_id:%s, direction:%s",
-        room_id_.c_str(), user_id_.c_str(), session_id_.c_str(),
-        (direction_type_ == SRtpType::SRTP_SESSION_TYPE_SEND) ? "SEND" : "RECV");
+        room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), SRtpTypeStr(direction_type_));
 }
 
 void WebRtcSession::Close() {
@@ -154,9 +152,9 @@ void WebRtcSession::OnDtlsTransportConnected(
       uint8_t* srtpRemoteKey,
       size_t srtpRemoteKeyLen,
       std::string& remoteCert) {
-    LogInfof(logger_, "DTLS connected, room_id:%s, user_id:%s, session_id:%s, srtpCryptoSuite:%d, remoteCert:%s, direction:%s",
-        room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), static_cast<int>(srtpCryptoSuite), remoteCert.c_str(),
-        (direction_type_ == SRtpType::SRTP_SESSION_TYPE_SEND) ? "SEND" : "RECV");
+    LogInfof(logger_, "DTLS connected, room_id:%s, user_id:%s, session_id:%s, srtpCryptoSuite:%s, remoteCert:%s, direction:%s",
+        room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), SRtpCryptoSuiteStr(srtpCryptoSuite), remoteCert.c_str(),
+        SRtpTypeStr(direction_type_));
     
     try {
         srtp_send_session_.reset(new SRtpSession(SRtpType::SRTP_SESSION_TYPE_SEND, srtpCryptoSuite,

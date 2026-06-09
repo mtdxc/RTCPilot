@@ -69,8 +69,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 	std::string log_file = Config::Instance().log_path_;
-    log_file += ".";
-    log_file += get_now_str_for_filename();
+    // log_file += "." + get_now_str_for_filename();
     auto log_level = GetLogLevelFromString(Config::Instance().log_level_);
     // Initialize logger
 	std::unique_ptr<Logger> logger(new Logger(log_file, log_level));
@@ -109,62 +108,55 @@ int main(int argc, char* argv[]) {
     }
     // Create and run the RTMP server
     std::unique_ptr<RtmpServer> rtmp_server_ptr;
-    if (Config::Instance().rtmp_cfg_.enable_) {
-        rtmp_server_ptr.reset(new RtmpServer(loop, Config::Instance().rtmp_cfg_.listen_ip_, Config::Instance().rtmp_cfg_.port_, logger.get()));
-        LogInfof(logger.get(), "Starting RTMP server on %s:%d", 
-            Config::Instance().rtmp_cfg_.listen_ip_.c_str(), 
-            Config::Instance().rtmp_cfg_.port_);
+    auto& rtmp_cfg = Config::Instance().rtmp_cfg_;
+    if (rtmp_cfg.enable_) {
+        rtmp_server_ptr.reset(new RtmpServer(loop, rtmp_cfg.listen_ip_, rtmp_cfg.port_, logger.get()));
+        LogInfof(logger.get(), "Starting RTMP server on %s:%d", rtmp_cfg.listen_ip_.c_str(), rtmp_cfg.port_);
     } else {
         LogInfof(logger.get(), "RTMP server is disabled");
     }
 
     // Create and run the HTTP-FLV server
     std::unique_ptr<HttpFlvServer> httpflv_server_ptr;
-    if (Config::Instance().httpflv_cfg_.enable_) {
-        httpflv_server_ptr.reset(new HttpFlvServer(loop, Config::Instance().httpflv_cfg_.listen_ip_, Config::Instance().httpflv_cfg_.port_, logger.get()));
-        LogInfof(logger.get(), "Starting httpflv server on %s:%d", 
-            Config::Instance().httpflv_cfg_.listen_ip_.c_str(), 
-            Config::Instance().httpflv_cfg_.port_);
+    auto& httflv_cfg = Config::Instance().httpflv_cfg_;
+    if (httflv_cfg.enable_) {
+        httpflv_server_ptr.reset(new HttpFlvServer(loop, httflv_cfg.listen_ip_, httflv_cfg.port_, logger.get()));
+        LogInfof(logger.get(), "Starting httpflv server on %s:%d", httflv_cfg.listen_ip_.c_str(), httflv_cfg.port_);
     } else {
         LogInfof(logger.get(), "HTTP-FLV server is disabled");
     }
 
     std::unique_ptr<WsStreamServer> ws_stream_server_ptr;
+    auto& ws_stream_cfg = Config::Instance().ws_stream_cfg_;
     // Create and run the WebSocket stream server
-    if (Config::Instance().ws_stream_cfg_.enable_) {
-        ws_stream_server_ptr.reset(new WsStreamServer(Config::Instance().ws_stream_cfg_.listen_ip_,
-            Config::Instance().ws_stream_cfg_.port_,
-            loop,
-            logger.get()));
-        LogInfof(logger.get(), "Starting ws_stream(flv) server on %s:%d", 
-            Config::Instance().ws_stream_cfg_.listen_ip_.c_str(), 
-            Config::Instance().ws_stream_cfg_.port_);
+    if (ws_stream_cfg.enable_) {
+        ws_stream_server_ptr.reset(new WsStreamServer(ws_stream_cfg.listen_ip_, ws_stream_cfg.port_, loop, logger.get()));
+        LogInfof(logger.get(), "Starting ws_stream(flv) server on %s:%d", ws_stream_cfg.listen_ip_.c_str(), ws_stream_cfg.port_);
     } else {
         LogInfof(logger.get(), "WebSocket stream server is disabled");
     }
 
     std::unique_ptr<WsMessageServer> ws_message_server_ptr;
-    if (Config::Instance().ws_signal_cfg_.ssl_enable_ && 
-        !Config::Instance().ws_signal_cfg_.cert_path_.empty() && 
-        !Config::Instance().ws_signal_cfg_.key_path_.empty()) {
-        ws_message_server_ptr.reset(new WsMessageServer(Config::Instance().ws_signal_cfg_.listen_ip_,
-                                    Config::Instance().ws_signal_cfg_.port_, 
+    auto& ws_signal_cfg = Config::Instance().ws_signal_cfg_;
+    if (ws_signal_cfg.ssl_enable_ && !ws_signal_cfg.cert_path_.empty() && !ws_signal_cfg.key_path_.empty()) {
+        ws_message_server_ptr.reset(new WsMessageServer(ws_signal_cfg.listen_ip_,
+                                    ws_signal_cfg.port_, 
                                     loop,
-                                    Config::Instance().ws_signal_cfg_.key_path_,
-                                    Config::Instance().ws_signal_cfg_.cert_path_,
+                                    ws_signal_cfg.key_path_,
+                                    ws_signal_cfg.cert_path_,
                                     logger.get()));
         LogInfof(logger.get(), "Starting ws_message server with ssl on %s:%d for webrtc signaling",
-            Config::Instance().ws_signal_cfg_.listen_ip_.c_str(),
-            Config::Instance().ws_signal_cfg_.port_);
+            ws_signal_cfg.listen_ip_.c_str(),
+            ws_signal_cfg.port_);
 
     } else {
-        ws_message_server_ptr.reset(new WsMessageServer(Config::Instance().ws_signal_cfg_.listen_ip_,
-                                    Config::Instance().ws_signal_cfg_.port_, 
-                                loop, 
-                                logger.get()));
+        ws_message_server_ptr.reset(new WsMessageServer(ws_signal_cfg.listen_ip_,
+                                    ws_signal_cfg.port_, 
+                                    loop, 
+                                    logger.get()));
         LogInfof(logger.get(), "Starting ws_message server on %s:%d for webrtc signaling",
-            Config::Instance().ws_signal_cfg_.listen_ip_.c_str(),
-            Config::Instance().ws_signal_cfg_.port_);
+            ws_signal_cfg.listen_ip_.c_str(),
+            ws_signal_cfg.port_);
     }
 
     std::vector<std::unique_ptr<WebRtcServer>> webrtc_servers;
@@ -181,27 +173,22 @@ int main(int argc, char* argv[]) {
     }
 
     std::unique_ptr<Whip> whip_server_ptr;
-    if (Config::Instance().whip_server_cfg_.enable_) {
-        if (Config::Instance().whip_server_cfg_.ssl_enable_
-            && !Config::Instance().whip_server_cfg_.cert_path_.empty()
-            && !Config::Instance().whip_server_cfg_.key_path_.empty()) {
+    auto &whip_cfg = Config::Instance().whip_server_cfg_;
+    if (whip_cfg.enable_) {
+        if (whip_cfg.ssl_enable_ && !whip_cfg.cert_path_.empty() && !whip_cfg.key_path_.empty()) {
             whip_server_ptr.reset(new Whip(loop,
-                Config::Instance().whip_server_cfg_.listen_ip_,
-                Config::Instance().whip_server_cfg_.port_,
-                Config::Instance().whip_server_cfg_.key_path_,
-                Config::Instance().whip_server_cfg_.cert_path_,
+                whip_cfg.listen_ip_,
+                whip_cfg.port_,
+                whip_cfg.key_path_,
+                whip_cfg.cert_path_,
                 logger.get()));
-            LogInfof(logger.get(), "Starting WHIP server with ssl on %s:%d",
-                Config::Instance().whip_server_cfg_.listen_ip_.c_str(),
-                Config::Instance().whip_server_cfg_.port_);
+            LogInfof(logger.get(), "Starting WHIP server with ssl on %s:%d", whip_cfg.listen_ip_.c_str(), whip_cfg.port_);
         } else {
             whip_server_ptr.reset(new Whip(loop,
-                Config::Instance().whip_server_cfg_.listen_ip_,
-                Config::Instance().whip_server_cfg_.port_,
+                whip_cfg.listen_ip_,
+                whip_cfg.port_,
                 logger.get()));
-            LogInfof(logger.get(), "Starting WHIP server on %s:%d",
-                Config::Instance().whip_server_cfg_.listen_ip_.c_str(),
-                Config::Instance().whip_server_cfg_.port_);
+            LogInfof(logger.get(), "Starting WHIP server on %s:%d", whip_cfg.listen_ip_.c_str(), whip_cfg.port_);
         }
     } else {
         LogInfof(logger.get(), "WHIP server is disabled");

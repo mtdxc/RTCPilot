@@ -484,7 +484,7 @@ void DtlsSession::OnSslInfo(int where, int ret) {
 	else if ((where & SSL_CB_EXIT) != 0) {
 		if (ret == 0) {
 			LogInfof(logger_, "[role:%s, failed:'%s']", role, SSL_state_string_long(ssl_));
-		} else if (ret < 0){
+		} else if (ret < 0) {
 			LogInfof(logger_, "role: %s, waiting:'%s']", role, SSL_state_string_long(ssl_));
 		}
 	} else if ((where & SSL_CB_HANDSHAKE_START) != 0) {

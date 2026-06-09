@@ -23,17 +23,13 @@ typedef struct NTP_TIMESTAMP_S
 
 inline int64_t now_millisec() {
     std::chrono::system_clock::duration d = std::chrono::system_clock::now().time_since_epoch();
-
     std::chrono::milliseconds mil = std::chrono::duration_cast<std::chrono::milliseconds>(d);
-
     return (int64_t)mil.count();
 }
 
 inline int64_t now_microsec() {
     std::chrono::steady_clock::duration d = std::chrono::steady_clock::now().time_since_epoch();
-
     std::chrono::microseconds mil = std::chrono::duration_cast<std::chrono::microseconds>(d);
-
     return int64_t(mil.count());
 }
 

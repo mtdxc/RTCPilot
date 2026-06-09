@@ -2,6 +2,30 @@
 #include <cstring>
 
 namespace cpp_streamer {
+const char* SRtpTypeStr(SRtpType type){
+    switch (type) {
+        case SRTP_SESSION_TYPE_SEND:
+            return "SEND";
+        case SRTP_SESSION_TYPE_RECV:
+            return "RECV";
+        default:
+            return "INVALID";
+    }
+}
+const char* SRtpCryptoSuiteStr(SRtpSessionCryptoSuite suite) {
+    switch (suite) {
+        case AEAD_AES_256_GCM:
+            return "AEAD_AES_256_GCM";
+        case AEAD_AES_128_GCM:
+            return  "AEAD_AES_128_GCM";
+        case AES_CM_128_HMAC_SHA1_80:
+            return "AES_CM_128_HMAC_SHA1_80";
+        case AES_CM_128_HMAC_SHA1_32:
+            return "AES_CM_128_HMAC_SHA1_32";
+        default:
+            return "UNKNOWN";
+    }
+}
 
 bool SRtpSession::global_initialized_ = false;
 
@@ -253,27 +277,8 @@ bool SRtpSession::InitSrtpSession() {
         return false;
     }
 
-    const char* type_str = (type_ == SRTP_SESSION_TYPE_SEND) ? "SEND" : "RECV";
-    const char* suite_str = "";
-    switch (crypto_suite_) {
-        case AEAD_AES_256_GCM:
-            suite_str = "AEAD_AES_256_GCM";
-            break;
-        case AEAD_AES_128_GCM:
-            suite_str = "AEAD_AES_128_GCM";
-            break;
-        case AES_CM_128_HMAC_SHA1_80:
-            suite_str = "AES_CM_128_HMAC_SHA1_80";
-            break;
-        case AES_CM_128_HMAC_SHA1_32:
-            suite_str = "AES_CM_128_HMAC_SHA1_32";
-            break;
-        default:
-            suite_str = "UNKNOWN";
-    }
-
     LogInfof(logger_, "SRTP session created: type=%s, suite=%s, key_len=%zu", 
-             type_str, suite_str, key_len_);
+             SRtpTypeStr(type_), SRtpCryptoSuiteStr(crypto_suite_), key_len_);
     
     return true;
 }

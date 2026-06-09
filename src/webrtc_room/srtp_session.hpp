@@ -19,6 +19,7 @@ typedef enum
     AES_CM_128_HMAC_SHA1_80,
     AES_CM_128_HMAC_SHA1_32
 } SRtpSessionCryptoSuite;
+const char* SRtpCryptoSuiteStr(SRtpSessionCryptoSuite suite);
 
 typedef enum
 {
@@ -26,6 +27,7 @@ typedef enum
     SRTP_SESSION_TYPE_SEND = 0,
     SRTP_SESSION_TYPE_RECV
 } SRtpType;
+const char* SRtpTypeStr(SRtpType type);
 
 class SRtpSession
 {

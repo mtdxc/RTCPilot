@@ -15,33 +15,26 @@ namespace cpp_streamer
 	}
 
 	std::string get_now_str_for_filename() {
+		char dscr_sz[80] = {0};
 #ifdef _WIN32
-    SYSTEMTIME st;
-    GetLocalTime(&st);
-
-    char dscr_sz[80];
-
-    sprintf_s(dscr_sz, sizeof(dscr_sz),
-        "%04d.%02d.%02d.%02d.%02d.%02d",
-        st.wYear,
-        st.wMonth,
-        st.wDay,
-        st.wHour,
-        st.wMinute,
-        st.wSecond
-    );
-
-    return std::string(dscr_sz);
+		SYSTEMTIME st;
+		GetLocalTime(&st);
+		sprintf_s(dscr_sz, sizeof(dscr_sz),
+			"%04d.%02d.%02d.%02d.%02d.%02d",
+			st.wYear,
+			st.wMonth,
+			st.wDay,
+			st.wHour,
+			st.wMinute,
+			st.wSecond
+		);
 #else
-    std::time_t t = std::time(nullptr);
-    auto tm = std::localtime(&t);
-    char dscr_sz[80];
-
-    sprintf(dscr_sz, "%04d.%02d.%02d.%02d.%02d.%02d",
-        tm->tm_year+1900, tm->tm_mon + 1, tm->tm_mday, 
-        tm->tm_hour, tm->tm_min, tm->tm_sec);
-    std::string desc(dscr_sz);
-    return desc;
+		std::time_t t = std::time(nullptr);
+		auto tm = std::localtime(&t);
+		sprintf(dscr_sz, "%04d.%02d.%02d.%02d.%02d.%02d",
+			tm->tm_year+1900, tm->tm_mon + 1, tm->tm_mday, 
+			tm->tm_hour, tm->tm_min, tm->tm_sec);
 #endif
+		return std::string(dscr_sz);
 	}
 }

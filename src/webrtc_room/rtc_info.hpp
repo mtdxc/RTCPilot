@@ -61,6 +61,7 @@ inline bool FmtpParamContain(const std::string& param_a, const std::string& para
     }
     return true;
 }
+
 class RtpSessionParam
 {
 public:
@@ -145,6 +146,7 @@ public:
         */
 
         ret_json["av_type"] = avtype_tostring(av_type_);
+        ret_json["mid"] = mid_;
         ret_json["codec"] = codec_name_;
         ret_json["fmtp_param"] = fmtp_param_;
         ret_json["rtcp_features"] = json::array();
@@ -177,36 +179,7 @@ public:
     }
     std::string Dump() const {
         json ret_json = json::object();
-        ret_json["av_type"] = av_type_;
-        ret_json["mid"] = mid_;
-        ret_json["codec"] = codec_name_;
-        ret_json["fmtp_param"] = fmtp_param_;
-        ret_json["rtcp_features"] = json::array();
-        for (const auto& feature : rtcp_features_) {
-            ret_json["rtcp_features"].push_back(feature);
-        }
-        if (channel_ > 0) {
-            ret_json["channel"] = channel_;
-        }
-        ret_json["ssrc"] = ssrc_;
-        ret_json["payload_type"] = payload_type_;
-        ret_json["clock_rate"] = clock_rate_;
-        ret_json["rtx_ssrc"] = rtx_ssrc_;
-        ret_json["rtx_payload_type"] = rtx_payload_type_;
-        ret_json["use_nack"] = use_nack_;
-
-        if (key_request_) {
-            ret_json["key_request"] = key_request_;
-        }
-        if (mid_ext_id_ > 0) {
-            ret_json["mid_ext_id"] = mid_ext_id_;
-        }
-        if (tcc_ext_id_ > 0) {
-            ret_json["tcc_ext_id"] = tcc_ext_id_;
-        }
-        if (abs_send_time_ext_id_ > 0) {
-            ret_json["abs_send_time_ext_id"] = abs_send_time_ext_id_;
-        }
+        Dump(ret_json);
         return ret_json.dump();
     }
 
@@ -264,13 +237,7 @@ public:
         for (const auto& push_info : pushers_) {
             json pusher_json = json::object();
             pusher_json["pusher_id"] = push_info.pusher_id_;
-            if (push_info.param_.av_type_ == MEDIA_AUDIO_TYPE) {
-                pusher_json["type"] = "audio";
-            } else if (push_info.param_.av_type_ == MEDIA_VIDEO_TYPE) {
-                pusher_json["type"] = "video";
-            } else {
-                pusher_json["type"] = "unknown";
-            }
+            pusher_json["type"] = avtype_tostring(push_info.param_.av_type_);
             pushers_json.push_back(pusher_json);
         }
         ret_json["pushers"] = pushers_json;
