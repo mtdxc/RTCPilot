@@ -3,13 +3,6 @@
 #include "logger.hpp"
 #include "timeex.hpp"
 #include "byte_stream.hpp"
-#ifdef _WIN64
-#include <winsock2.h>
-#else
-#include <arpa/inet.h>
-#endif
-#include <sstream>
-#include <cstring>
 #include <assert.h>
 
 namespace cpp_streamer

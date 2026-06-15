@@ -47,7 +47,7 @@ inline std::string DataToString(char* data, size_t len) {
     return print_data;
 }
 
-inline std::string DataToString(uint8_t* data, size_t len, bool return_flag = true) {
+inline std::string DataToString(const uint8_t* data, size_t len, bool return_flag = true) {
     char print_data[4*1024];
     size_t print_len = 0;
     const int max_print = 512;

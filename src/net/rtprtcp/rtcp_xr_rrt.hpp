@@ -1,15 +1,7 @@
 #ifndef RTCP_XR_RRT_HPP
 #define RTCP_XR_RRT_HPP
-#include <stdint.h>
-#include <stddef.h>
-#include <string>
-#include <string.h>
+
 #include <assert.h>
-#ifdef _WIN64
-#include <winsock2.h>
-#else
-#include <arpa/inet.h>
-#endif
 #include "rtprtcp_pub.hpp"
 #include "rtcp_xr.hpp"
 

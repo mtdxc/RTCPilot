@@ -6,8 +6,8 @@ namespace cpp_streamer {
 
 IceServer::IceServer(IceOnDataWriteCallbackI* cb, Logger* logger) : cb_(cb), logger_(logger)
 {
-    ice_ufrag_ = cpp_streamer::UUID::MakeNumString(16);
-    ice_pwd_ = cpp_streamer::UUID::MakeNumString(32);
+    ice_ufrag_ = UUID::MakeNumString(16);
+    ice_pwd_ = UUID::MakeNumString(32);
 
     LogInfof(logger_, "IceServer construct, ice_ufrag:%s, ice_pwd:%s",
         ice_ufrag_.c_str(), ice_pwd_.c_str());
@@ -46,7 +46,7 @@ int IceServer::HandleStunPacket(StunPacket* stun_pkt, UdpTuple addr) {
     StunPacket* resp_pkt = stun_pkt->CreateSuccessResponse();
     struct sockaddr remote_sock_addr;
 
-    cpp_streamer::GetIpv4Sockaddr(addr.ip_address, addr.port, &remote_sock_addr);
+    GetIpv4Sockaddr(addr.ip_address, addr.port, &remote_sock_addr);
     resp_pkt->password_ = this->ice_pwd_;
 	resp_pkt->xor_address_ = &remote_sock_addr;
     resp_pkt->Serialize();

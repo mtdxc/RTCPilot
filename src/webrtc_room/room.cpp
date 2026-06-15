@@ -1015,14 +1015,7 @@ int Room::SendPullRequestToPilotCenter(const std::string& pusher_user_id,
         pull_request_json["pusher_user_id"] = pusher_user_id;
         pull_request_json["udp_ip"] = relay_ptr->GetListenUdpIp();
         pull_request_json["udp_port"] = relay_ptr->GetListenUdpPort();
-
-        if (push_info.param_.av_type_ == MEDIA_PKT_TYPE::MEDIA_VIDEO_TYPE) {
-            pull_request_json["mediaType"] = "video";
-        } else if (push_info.param_.av_type_ == MEDIA_PKT_TYPE::MEDIA_AUDIO_TYPE) {
-            pull_request_json["mediaType"] = "audio";
-        } else {
-            pull_request_json["mediaType"] = "unknown";
-        }
+        pull_request_json["mediaType"] = avtype_tostring(push_info.param_.av_type_);
         pull_request_json["pushInfo"] = json::object();
         push_info.DumpJson(pull_request_json["pushInfo"]);
 

@@ -304,14 +304,7 @@ int RoomMgr::HandlePullRequest(int id, json& j, ProtooResponseI* resp_cb) {
             PushInfo push_info;
             std::string pid = push_item["pusher_id"];
             push_info.pusher_id_ = pid;
-            std::string media_type_str = push_item["type"];
-            if (media_type_str == "audio") {
-                push_info.param_.av_type_ = MEDIA_AUDIO_TYPE;
-            } else if (media_type_str == "video") {
-                push_info.param_.av_type_ = MEDIA_VIDEO_TYPE;
-            } else {
-                push_info.param_.av_type_ = MEDIA_UNKNOWN_TYPE;
-            }
+            push_info.param_.av_type_ = avtype_fromstring(push_item["type"]);
             pull_info.pushers_.push_back(push_info);
         }
 

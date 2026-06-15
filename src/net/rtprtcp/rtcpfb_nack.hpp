@@ -1,17 +1,7 @@
 #ifndef RTCP_FEEDBACK_NACK_HPP
 #define RTCP_FEEDBACK_NACK_HPP
+
 #include "rtcp_fb_pub.hpp"
-#include <stdint.h>
-#include <stddef.h>
-#include <string>
-#include <cstring>
-#include <sstream>
-#include <stdio.h>
-#ifdef _WIN64
-#include <winsock2.h>
-#else
-#include <arpa/inet.h>  // htonl(), htons(), ntohl(), ntohs()
-#endif
 #include <vector>
 
 namespace cpp_streamer

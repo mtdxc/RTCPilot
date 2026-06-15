@@ -4,13 +4,14 @@
 #include <string>
 #include <stdint.h>
 #include <stddef.h>
-#include <string>
+#include <string.h>
 #include <sstream>
 #ifdef _WIN64
 #include <winsock2.h>  // htonl(), htons(), ntohl(), ntohs()
 #else
 #include <arpa/inet.h>  // htonl(), htons(), ntohl(), ntohs()
 #endif
+
 namespace cpp_streamer
 {
 

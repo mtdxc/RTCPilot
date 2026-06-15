@@ -132,13 +132,13 @@ int WebRtcSession::HandleNoneStunPacket(const uint8_t* data, size_t len, UdpTran
     }
     return 0;
 }
-void WebRtcSession::OnIceWrite(const uint8_t* data, size_t sent_size, cpp_streamer::UdpTuple address) {
+void WebRtcSession::OnIceWrite(const uint8_t* data, size_t sent_size, UdpTuple address) {
     LogDebugf(logger_, "Stun response, room_id:%s, user_id:%s, session_id:%s, len:%lu, address:%s",
         room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), sent_size, address.to_string().c_str());
     trans_cb_->OnWriteUdpData(data, sent_size, address);
 }
 
-void WebRtcSession::OnDtlsTransportSendData(const uint8_t* data, size_t sent_size, cpp_streamer::UdpTuple address) {
+void WebRtcSession::OnDtlsTransportSendData(const uint8_t* data, size_t sent_size, UdpTuple address) {
     LogInfof(logger_, "DTLS send data, room_id:%s, user_id:%s, session_id:%s, len:%lu, address:%s",
         room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), sent_size, address.to_string().c_str());
     trans_cb_->OnWriteUdpData(data, sent_size, address);
@@ -181,6 +181,7 @@ void WebRtcSession::OnDtlsTransportConnected(
                 if (ssrc == 0) {
                     continue;
                 }
+                // 接收方连接建立则根据ssrc向源方请求关键帧
                 media_push_event_cb_->OnKeyFrameRequest(
                     puller->GetPusherId(),
                     puller->GetPulllerUserId(),
@@ -199,7 +200,7 @@ int WebRtcSession::HandleRtpPacket(const uint8_t* data, size_t len, UdpTuple add
             room_id_.c_str(), user_id_.c_str(), session_id_.c_str());
         return -1;
     }
-
+    // 模拟丢包
     if (Config::Instance().uplink_discard_percent_ > 0) {
         // simulate packet loss for test
         uint32_t rand_val = ByteCrypto::GetRandomUint(0, 100);
@@ -209,8 +210,8 @@ int WebRtcSession::HandleRtpPacket(const uint8_t* data, size_t len, UdpTuple add
             return 0;
         }
     }
-    RtpPacket* rtp_pkt = nullptr;
-    
+
+    std::unique_ptr<RtpPacket> rtp_pkt;
     try {
         bool r = srtp_recv_session_->DecryptRtp(const_cast<uint8_t*>(data), reinterpret_cast<int*>(&len));
         if (!r) {
@@ -219,7 +220,7 @@ int WebRtcSession::HandleRtpPacket(const uint8_t* data, size_t len, UdpTuple add
             return -1;
         }
 
-        rtp_pkt = RtpPacket::Parse(const_cast<uint8_t*>(data), len);
+        rtp_pkt.reset(RtpPacket::Parse(const_cast<uint8_t*>(data), len));
         if (!rtp_pkt) {
             LogErrorf(logger_, "Parse RTP failed after decrypt, room_id:%s, user_id:%s, session_id:%s, len:%zu",
                 room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), len);
@@ -246,7 +247,7 @@ int WebRtcSession::HandleRtpPacket(const uint8_t* data, size_t len, UdpTuple add
                     room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), ssrc, wide_seq, rtp_pkt->GetPayloadType(), rtp_pkt->GetLocalMs());
             }
         }
-        tcc_server_->InsertRtpPacket(rtp_pkt);
+        tcc_server_->InsertRtpPacket(rtp_pkt.get());
 
         auto it = ssrc2media_pusher_.find(ssrc);
         std::shared_ptr<MediaPusher> media_pusher = nullptr;
@@ -256,14 +257,12 @@ int WebRtcSession::HandleRtpPacket(const uint8_t* data, size_t len, UdpTuple add
             if (!r) {
                 LogErrorf(logger_, "RTP packet without mid, room_id:%s, user_id:%s, session_id:%s, ssrc:%u",
                     room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), ssrc);
-                delete rtp_pkt;
                 return -1;
             }
             auto mid_it = mid2media_pusher_.find(mid);
             if (mid_it == mid2media_pusher_.end()) {
                 LogErrorf(logger_, "No MediaPusher for RTP by mid, room_id:%s, user_id:%s, session_id:%s, ssrc:%u, mid:%u",
                     room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), ssrc, mid);
-                delete rtp_pkt;
                 return -1;
             }
             LogInfof(logger_, "Find MediaPusher for RTP by mid, room_id:%s, user_id:%s, session_id:%s, ssrc:%u, mid:%u",
@@ -274,15 +273,13 @@ int WebRtcSession::HandleRtpPacket(const uint8_t* data, size_t len, UdpTuple add
         } else {
             media_pusher = it->second;
         }
-        int ret = media_pusher->HandleRtpPacket(rtp_pkt);
+
+        int ret = media_pusher->HandleRtpPacket(rtp_pkt.get());
         if (ret < 0) {
             LogErrorf(logger_, "MediaPusher HandleRtpPacket failed, room_id:%s, user_id:%s, session_id:%s, ssrc:%u",
                 room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), ssrc);
-            delete rtp_pkt;
             return ret;
-        
         }
-        delete rtp_pkt;
         return ret;
     } catch(const std::exception& e) {
         LogErrorf(logger_, "HandleRtpPacket dispatch exception:%s, room_id:%s, user_id:%s, session_id:%s, len:%zu",
@@ -299,8 +296,7 @@ int WebRtcSession::HandleRtcpPacket(const uint8_t* data, size_t len, UdpTuple ad
                 room_id_.c_str(), user_id_.c_str(), session_id_.c_str());
             return -1;
         }
-        bool r = srtp_recv_session_->DecryptRtcp(const_cast<uint8_t*>(data), reinterpret_cast<int*>(&len));
-        if (!r) {
+        if (srtp_recv_session_->DecryptRtcp(const_cast<uint8_t*>(data), reinterpret_cast<int*>(&len))) {
             LogErrorf(logger_, "Decrypt RTCP failed, room_id:%s, user_id:%s, session_id:%s, len:%zu",
                 room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), len);
             return -1;
@@ -487,7 +483,7 @@ int WebRtcSession::HandleRtcpSrPacket(const uint8_t* data, size_t len) {
         room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), len);
 
     try {
-        RtcpSrPacket* sr_pkt = RtcpSrPacket::Parse(const_cast<uint8_t*>(data), len);
+        std::unique_ptr<RtcpSrPacket> sr_pkt(RtcpSrPacket::Parse(const_cast<uint8_t*>(data), len));
         if (!sr_pkt) {
             LogErrorf(logger_, "Parse RTCP SR packet failed, room_id:%s, user_id:%s, session_id:%s, len:%zu",
                 room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), len);
@@ -498,17 +494,14 @@ int WebRtcSession::HandleRtcpSrPacket(const uint8_t* data, size_t len) {
         if (it == ssrc2media_pusher_.end()) {
             LogErrorf(logger_, "No MediaPusher for RTCP SR, room_id:%s, user_id:%s, session_id:%s, ssrc:%u",
                 room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), ssrc);
-            delete sr_pkt;
             return -1;
         }
-        int ret = it->second->HandleRtcpSrPacket(sr_pkt);
+        int ret = it->second->HandleRtcpSrPacket(sr_pkt.get());
         if (ret != 0) {
             LogErrorf(logger_, "MediaPusher HandleRtcpSrPacket failed, room_id:%s, user_id:%s, session_id:%s, ssrc:%u",
                 room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), ssrc);
-            delete sr_pkt;
             return ret;
         }
-        delete sr_pkt;
         return 0;
     } catch(const std::exception& e) {
         LogErrorf(logger_, "HandleRtcpSrPacket exception:%s, room_id:%s, user_id:%s, session_id:%s, len:%zu",
@@ -523,7 +516,7 @@ int WebRtcSession::HandleRtcpRrPacket(const uint8_t* data, size_t len) {
     LogDebugf(logger_, "Handle RTCP RR packet, room_id:%s, user_id:%s, session_id:%s, len:%zu",
         room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), len);
     try {
-        RtcpRrPacket* rr_pkt = RtcpRrPacket::Parse(const_cast<uint8_t*>(data), len);
+        std::unique_ptr<RtcpRrPacket> rr_pkt(RtcpRrPacket::Parse(const_cast<uint8_t*>(data), len));
         if (!rr_pkt) {
             LogErrorf(logger_, "Parse RTCP RR packet failed, room_id:%s, user_id:%s, session_id:%s, len:%zu",
                 room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), len);
@@ -549,7 +542,6 @@ int WebRtcSession::HandleRtcpRrPacket(const uint8_t* data, size_t len) {
                 continue;
             }
         }
-        delete rr_pkt;
     } catch(const std::exception& e) {
         LogErrorf(logger_, "HandleRtcpRrPacket exception:%s, room_id:%s, user_id:%s, session_id:%s, len:%zu",
             e.what(), room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), len);
@@ -557,11 +549,13 @@ int WebRtcSession::HandleRtcpRrPacket(const uint8_t* data, size_t len) {
     }
     return 0;
 }
+
 int WebRtcSession::HandleRtcpXrPacket(const uint8_t* data, size_t len) {
     LogDebugf(logger_, "Handle RTCP XR packet, room_id:%s, user_id:%s, session_id:%s, len:%zu",
         room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), len);
     return 0;
 }
+
 int WebRtcSession::HandleRtcpRtpfbPacket(const uint8_t* data, size_t len) {
     LogDebugf(logger_, "Handle RTCP RTPFB packet, room_id:%s, user_id:%s, session_id:%s, len:%zu",
         room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), len);
@@ -572,7 +566,7 @@ int WebRtcSession::HandleRtcpRtpfbPacket(const uint8_t* data, size_t len) {
         {
             case FB_RTP_NACK:
             {
-                RtcpFbNack* nack_pkt = RtcpFbNack::Parse(const_cast<uint8_t*>(data), len);
+                std::unique_ptr<RtcpFbNack> nack_pkt(RtcpFbNack::Parse(const_cast<uint8_t*>(data), len));
                 if (!nack_pkt) {
                     LogErrorf(logger_, "Parse RTCP RTPFB NACK packet failed, room_id:%s, user_id:%s, session_id:%s, len:%zu",
                         room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), len);
@@ -584,17 +578,14 @@ int WebRtcSession::HandleRtcpRtpfbPacket(const uint8_t* data, size_t len) {
                 if (it == ssrc2media_puller_.end()) {
                     LogErrorf(logger_, "No MediaPuller for RTCP RTPFB NACK, room_id:%s, user_id:%s, session_id:%s, ssrc:%u",
                         room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), ssrc);
-                    delete nack_pkt;
                     return -1;
                 }
-                int ret = it->second->HandleRtcpFbNack(nack_pkt);
+                int ret = it->second->HandleRtcpFbNack(nack_pkt.get());
                 if (ret < 0) {
                     LogErrorf(logger_, "MediaPuller HandleRtcpFbNack failed, room_id:%s, user_id:%s, session_id:%s, ssrc:%u",
                         room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), ssrc);
-                    delete nack_pkt;
                     return ret;
                 }
-                delete nack_pkt;
                 break;
             }
             case FB_RTP_TCC:
@@ -609,8 +600,7 @@ int WebRtcSession::HandleRtcpRtpfbPacket(const uint8_t* data, size_t len) {
             }
         }
     } catch(const std::exception& e) {
-        LogErrorf(logger_, "HandleRtcpRtpfbPacket exception:%s, room_id:%s, user_id:%s, \
-session_id:%s, len:%zu",
+        LogErrorf(logger_, "HandleRtcpRtpfbPacket exception:%s, room_id:%s, user_id:%s, session_id:%s, len:%zu",
             e.what(), room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), len);
     }
     
@@ -629,7 +619,7 @@ int WebRtcSession::HandleRtcpPsfbPacket(const uint8_t* data, size_t len) {
             {
                 LogInfof(logger_, "Handle RTCP PSFB PLI, room_id:%s, user_id:%s, session_id:%s, len:%zu",
                     room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), len);
-                RtcpPsPli* pspli_pkt = RtcpPsPli::Parse(const_cast<uint8_t*>(data), len);
+                std::unique_ptr<RtcpPsPli> pspli_pkt(RtcpPsPli::Parse(const_cast<uint8_t*>(data), len));
                 if (!pspli_pkt) {
                     LogErrorf(logger_, "Parse RTCP PSFB PLI packet failed, room_id:%s, user_id:%s, session_id:%s, len:%zu",
                         room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), len);
@@ -640,10 +630,8 @@ int WebRtcSession::HandleRtcpPsfbPacket(const uint8_t* data, size_t len) {
                 if (it == ssrc2media_puller_.end()) {
                     LogErrorf(logger_, "No MediaPuller for RTCP PSFB PLI, room_id:%s, user_id:%s, session_id:%s, ssrc:%u",
                         room_id_.c_str(), user_id_.c_str(), session_id_.c_str(), ssrc);
-                    delete pspli_pkt;
                     return -1;
                 }
-                delete pspli_pkt;
                 std::string pusher_id = it->second->GetPusherId();
                 std::string pusher_user_id = it->second->GetPusherUserId();
                 std::string puller_user_id = it->second->GetPulllerUserId();

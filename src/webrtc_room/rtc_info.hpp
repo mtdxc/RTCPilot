@@ -1,5 +1,6 @@
 #ifndef RTC_INFO_HPP
 #define RTC_INFO_HPP
+
 #include "utils/json.hpp"
 #include "utils/av/av.hpp"
 #include "utils/stringex.hpp"
@@ -70,15 +71,7 @@ public:
 
 public:
     void FromJson(const json& j) {
-        std::string avtype_str = j["av_type"].get<std::string>();
-        if (avtype_str == "video") {
-            av_type_ = MEDIA_VIDEO_TYPE;
-        } else if (avtype_str == "audio") {
-            av_type_ = MEDIA_AUDIO_TYPE;
-        } else {
-            av_type_ = MEDIA_UNKNOWN_TYPE;
-        }
-        
+        av_type_ = avtype_fromstring(j["av_type"].get<std::string>());
         codec_name_ = j["codec"].get<std::string>();
         fmtp_param_ = j["fmtp_param"].get<std::string>();
         rtcp_features_.clear();
@@ -177,6 +170,7 @@ public:
         }
         return;
     }
+    
     std::string Dump() const {
         json ret_json = json::object();
         Dump(ret_json);

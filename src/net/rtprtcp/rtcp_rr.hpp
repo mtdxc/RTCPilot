@@ -1,20 +1,9 @@
 #ifndef RTCP_RR_HPP
 #define RTCP_RR_HPP
+
 #include "rtprtcp_pub.hpp"
-#include "logger.hpp"
 #include "byte_stream.hpp"
 #include "stringex.hpp"
-
-#include <stdint.h>
-#include <stddef.h>
-#include <string>
-#include <cstring>
-#ifdef _WIN64
-#include <winsock2.h>
-#else
-#include <arpa/inet.h>
-#endif
-#include <sstream>
 #include <vector>
 #include <stdio.h>
 #include <iostream>
@@ -60,7 +49,18 @@ class RtcpRrBlockInfo
 private:
     RtcpRrBlock* block_ = nullptr;
     bool need_delete_   = false;
-
+    void freeBlock() {
+        if (need_delete_) {
+            if (block_) {
+                free((void*)block_);
+                block_ = nullptr;
+            }
+            need_delete_ = false;
+        }
+        else {
+            block_ = nullptr;
+        }
+    }
 public:
     RtcpRrBlockInfo()
     {
@@ -73,10 +73,7 @@ public:
     }
     ~RtcpRrBlockInfo()
     {
-        if (need_delete_ && block_) {
-            free((void*)block_);
-            block_ = nullptr;
-        }
+        freeBlock();
     }
 
 public:
@@ -84,12 +81,12 @@ public:
         block_ = block;
     }
 
-    RtcpRrBlock* GetBlock() {
+    RtcpRrBlock* GetBlock() const {
         return block_;
     }
 
 public:
-    uint32_t GetReporteeSsrc() {
+    uint32_t GetReporteeSsrc() const {
         return ntohl(block_->reportee_ssrc);
     }
 
@@ -97,7 +94,7 @@ public:
         block_->reportee_ssrc = (uint32_t)htonl(ssrc);
     }
 
-    uint32_t GetHighestSeq() {
+    uint32_t GetHighestSeq() const {
         return ntohl(block_->highest_seq);
     }
 
@@ -105,32 +102,27 @@ public:
         block_->highest_seq = (uint32_t)htonl(highest_seq);
     }
 
-    uint8_t GetFracLost() {
+    uint8_t GetFracLost() const {
         uint8_t* p = (uint8_t*)block_;
-        p += 4;
-        return *p;
+        return p[4];
     }
 
     void SetFracLost(uint8_t fraclost) {
         uint8_t* p = (uint8_t*)block_;
-        p += 4;
-        *p = fraclost;
+        p[4] = fraclost;
     }
 
-    uint32_t GetCumulativeLost() {
+    uint32_t GetCumulativeLost() const {
         uint8_t* p = (uint8_t*)block_;
-        p += 4 + 1;
-        return ByteStream::Read3Bytes(p);
+        return ByteStream::Read3Bytes(p + 5);
     }
 
     void SetCumulativeLost(uint32_t cumulative_lost) {
         uint8_t* p = (uint8_t*)block_;
-        p += 4 + 1;
-
-        ByteStream::Write3Bytes(p, cumulative_lost);
+        ByteStream::Write3Bytes(p + 5, cumulative_lost);
     }
 
-    uint32_t GetJitter() {
+    uint32_t GetJitter() const {
         return (uint32_t)ntohl(block_->jitter);
     }
 
@@ -138,7 +130,7 @@ public:
         block_->jitter = (uint32_t)htonl(jitter);
     }
 
-    uint32_t GetLsr() {
+    uint32_t GetLsr() const {
         return (uint32_t)ntohl(block_->lsr);
     }
 
@@ -146,7 +138,7 @@ public:
         block_->lsr = (uint32_t)htonl(lsr);
     }
 
-    uint32_t GetDlsr() {
+    uint32_t GetDlsr() const {
         return (uint32_t)ntohl(block_->dlsr);
     }
 
@@ -221,14 +213,14 @@ public:
         return (uint8_t*)this->data;
     }
     size_t GetLen() const { return len_;}
-    std::string Dump() {
+    std::string Dump() const {
         std::stringstream ss;
 
         ss << "rtcp receive reporter ssrc:" << this->GetReporterSsrc()
             << ", block count:" << this->rr_blocks_.size() 
             << "\r\n";
 
-        for(RtcpRrBlockInfo& info : this->rr_blocks_) {
+        for(auto& info : this->rr_blocks_) {
             ss << ", reportee ssrc:" << info.GetReporteeSsrc()
                 << ", frac lost:" << (int)info.GetFracLost()
                 << "(" << (float)info.GetFracLost()/256.0 << ")"
@@ -242,7 +234,7 @@ public:
         return ss.str();
     }
 
-    std::vector<RtcpRrBlockInfo> GetRrBlocks() {
+    std::vector<RtcpRrBlockInfo> GetRrBlocks() const {
         return rr_blocks_;
     }
     
@@ -263,7 +255,7 @@ public:
         return;
     }
 
-    uint32_t GetReporterSsrc() {
+    uint32_t GetReporterSsrc() const {
         return ntohl(*reporter_ssrc_p_);
     }
 

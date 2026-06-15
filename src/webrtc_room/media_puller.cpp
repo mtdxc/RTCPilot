@@ -24,7 +24,7 @@ MediaPuller::MediaPuller(const RtpSessionParam& param,
         session_id_(session_id),
         cb_(cb)
 {
-    puller_id_ = cpp_streamer::UUID::MakeUUID2();
+    puller_id_ = UUID::MakeUUID2();
     pusher_id_ = pusher_id;
     
     LogInfof(logger_, "MediaPuller construct, room_id:%s, pusher_id:%s, puller_user_id:%s, pusher_user_id:%s, session_id:%s, puller_id:%s, ssrc:%u, media_type:%s",

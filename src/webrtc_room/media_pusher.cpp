@@ -26,7 +26,7 @@ MediaPusher::MediaPusher(const RtpSessionParam& param,
         cb_(cb),
         packet2room_cb_(packet2room_cb)
 {
-    pusher_id_ = cpp_streamer::UUID::MakeUUID2();
+    pusher_id_ = UUID::MakeUUID2();
     media_type_ = param_.av_type_;
 
     LogInfof(logger_, "MediaPusher construct, room_id:%s, user_id:%s, session_id:%s, pusher_id:%s, \
@@ -97,8 +97,7 @@ room_id:%s, user_id:%s", e.what(), room_id_.c_str(), user_id_.c_str());
         
         uint8_t old_ext_id = 0;
         rtp_pkt->ClearMidExtension((uint8_t)param_.mid_, old_ext_id);
-        LogDebugf(logger_, "MediaPusher clear mid extension, old_ext_id:%d, mid:%d",
-            old_ext_id, param_.mid_);
+        LogDebugf(logger_, "MediaPusher clear mid extension, old_ext_id:%d, mid:%d", old_ext_id, param_.mid_);
         
         packet2room_cb_->OnRtpPacketFromRtcPusher(user_id_, session_id_, pusher_id_, rtp_pkt);
         return 0;

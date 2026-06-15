@@ -1,20 +1,14 @@
 #ifndef RTCP_PS_PLI_HPP
 #define RTCP_PS_PLI_HPP
+
 #include "rtprtcp_pub.hpp"
 #include "rtcp_fb_pub.hpp"
-#include "logger.hpp"
 #include "byte_stream.hpp"
 #include "stringex.hpp"
 #include <stdint.h>
 #include <stddef.h>
 #include <string>
 #include <cstring>
-#ifdef _WIN64
-#include <winsock2.h>
-#else
-#include <arpa/inet.h>
-#endif
-#include <sstream>
 
 namespace cpp_streamer
 {
@@ -61,7 +55,6 @@ public:
 
     std::string Dump() {
         std::stringstream ss;
-        
         ss << "rtcp ps feedback length:" << this->GetDataLen();
         ss << ", sender ssrc:" << this->GetSenderSsrc();
         ss << ", media ssrc:" << this->GetMediaSsrc() << "\r\n";

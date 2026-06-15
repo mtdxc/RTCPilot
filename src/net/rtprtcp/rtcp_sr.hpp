@@ -1,17 +1,9 @@
 #ifndef RTCP_SR_HPP
 #define RTCP_SR_HPP
-#include "logger.hpp"
+
 #include "rtprtcp_pub.hpp"
-#include <stdint.h>
 #include <stddef.h>
-#include <string>
 #include <cstring>
-#ifdef _WIN64
-#include <winsock2.h>
-#else
-#include <arpa/inet.h>
-#endif
-#include <sstream>
 
 namespace cpp_streamer
 {
@@ -135,13 +127,11 @@ public:
     }
 
     uint8_t* Serial(size_t& ret_len) {
-        uint8_t* ret_data = this->data;
-        ret_len = sizeof(RtcpCommonHeader) + sizeof(uint32_t) + sizeof(RtcpSrBlock);
-
-        return ret_data;
+        ret_len = GetDataLen();
+        return this->data;
     }
 
-    std::string Dump() {
+    std::string Dump() const {
         std::stringstream ss;
 
         ss << "rtcp version:" << (int)rtcp_header_->version << ", pad:" << (int)rtcp_header_->padding
@@ -156,7 +146,7 @@ public:
     }
 
     uint8_t* GetData() { return this->data; }
-    size_t GetDataLen() { return sizeof(RtcpCommonHeader) + sizeof(uint32_t) + sizeof(RtcpSrBlock); }
+    size_t GetDataLen() const { return sizeof(RtcpCommonHeader) + sizeof(uint32_t) + sizeof(RtcpSrBlock); }
 
 private:
     RtcpCommonHeader* rtcp_header_ = nullptr;

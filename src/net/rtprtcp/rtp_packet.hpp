@@ -1,14 +1,7 @@
 #ifndef RTP_PACKET_HPP
 #define RTP_PACKET_HPP
+
 #include "rtprtcp_pub.hpp"
-#include <stdint.h>
-#include <stddef.h>
-#include <string>
-#ifdef _WIN64
-#include <winsock2.h>
-#else
-#include <arpa/inet.h>
-#endif
 #include <map>
 
 namespace cpp_streamer

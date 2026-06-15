@@ -154,6 +154,18 @@ inline void get_video_extradata(unsigned char *pps, int pps_len,
     return;
 }
 
+inline MEDIA_PKT_TYPE avtype_fromstring(const std::string& type) {
+    if (type == "video") {
+        return MEDIA_VIDEO_TYPE;
+    } else if (type == "audio") {
+        return MEDIA_AUDIO_TYPE;
+    } else if (type == "metadata") {
+        return MEDIA_METADATA_TYPE;
+    } else {
+        return MEDIA_UNKNOWN_TYPE;
+    }
+}
+
 inline std::string avtype_tostring(MEDIA_PKT_TYPE type) {
     switch(type)
     {
