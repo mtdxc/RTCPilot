@@ -57,18 +57,20 @@ void WsPublishSession::OnReadData(int code, const uint8_t* data, size_t len)
 
     // size_t debug_len = len > 80 ? 80 : len;
     // LogInfoData(logger_, data, debug_len, "flv data");
-    // // write to a flv file in binary format
-    // std::string filename = stream_name_ + ".flv";
-    // FILE* fp = nullptr;
-    // fopen_s(&fp, filename.c_str(), "ab+");
-    // if (fp) {
-    //     fwrite(data, len, 1, fp);
-    //     fclose(fp);
-    // }
+#if FILE_DUMP_DEBUG    
+    // write to a flv file in binary format
+    std::string filename = stream_name_ + ".flv";
+    FILE* fp = nullptr;
+    fopen_s(&fp, filename.c_str(), "ab+");
+    if (fp) {
+        fwrite(data, len, 1, fp);
+        fclose(fp);
+    }
+#endif
     try {
         Media_Packet_Ptr pkt_ptr = std::make_shared<Media_Packet>(len);
         pkt_ptr->buffer_ptr_->AppendData((const char*)data, len);
-        pkt_ptr->key_ = app_ + "/" + stream_;
+        pkt_ptr->key_ = key_;
         flv_demuxer_ptr_->SourceData(pkt_ptr);
     } catch(const std::exception& e) {
         LogErrorf(logger_, "WsPublishSession::OnReadData exception:%s, app:%s, stream:%s", e.what(), app_.c_str(), stream_.c_str());

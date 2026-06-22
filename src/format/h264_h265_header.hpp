@@ -1,5 +1,6 @@
 #ifndef H264_HEADER_HPP
 #define H264_HEADER_HPP
+
 #include "byte_stream.hpp"
 #include "data_buffer.hpp"
 #include "logger.hpp"

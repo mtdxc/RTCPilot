@@ -101,9 +101,9 @@ public:
 		}
 		return true;
 	}
+
 	static std::shared_ptr<ProtooRequestBase> FromJson(nlohmann::json& j) {
 		std::shared_ptr<ProtooRequestBase> obj(new ProtooRequestBase());
-
 		bool r = Parse(j, obj);
 		if (!r) {
 			return nullptr;

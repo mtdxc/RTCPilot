@@ -22,9 +22,7 @@ class WsStreamServer : public TimerInterface
 
 public:
     WsStreamServer(const std::string& ip, uint16_t port, uv_loop_t* loop, Logger* logger);
-    WsStreamServer(const std::string& ip, 
-        uint16_t port, 
-        uv_loop_t* loop, 
+    WsStreamServer(const std::string& ip, uint16_t port, uv_loop_t* loop, 
         const std::string& key_file, 
         const std::string& cert_file, 
         Logger* logger);

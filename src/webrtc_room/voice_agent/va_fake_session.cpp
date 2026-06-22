@@ -12,6 +12,7 @@ VaFakeSession::VaFakeSession(const std::string& room_id, const std::string& user
     LogInfof(logger_, "VaFakeSession constructed for room_id:%s, user_id:%s, session_id:%s", 
         room_id_.c_str(), user_id_.c_str(), id_.c_str());
 }
+
 VaFakeSession::~VaFakeSession()
 {
     LogInfof(logger_, "VaFakeSession destructed for room_id:%s, user_id:%s, session_id:%s", 
@@ -22,6 +23,7 @@ bool VaFakeSession::IsConnected()
 {
     return true;
 }
+
 void VaFakeSession::OnTransportSendRtp(uint8_t* data, size_t sent_size) {
 
 }

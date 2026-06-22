@@ -395,6 +395,7 @@ FingerprintAlgorithm DtlsSession::GetFingerprintAlgorithm(const std::string& fin
 	else
 		return FingerprintAlgorithm::ALGORITHM_NONE;
 }
+
 std::string& DtlsSession::GetFingerprintAlgorithmString(FingerprintAlgorithm fingerprint)
 {
 	auto it = DtlsSession::fingerprint_algorithm2string_.find(fingerprint);
